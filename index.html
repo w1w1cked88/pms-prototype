@@ -346,6 +346,12 @@ a{color:var(--accent-deep);text-decoration:none}
 .prices{display:flex;border-top:1px dashed var(--line)}
 .pcell{width:var(--dw);flex-shrink:0;text-align:center;font-size:9.5px;color:var(--faint);padding:2.5px 0}
 .pcell.wknd{color:var(--wait);font-weight:600}
+/* свободный промежуток: клик = новая бронь на эти даты */
+.gap-pill{position:absolute;top:11px;height:24px;border:1.5px dashed var(--line-strong);border-radius:8px;
+  color:var(--faint);font-size:10.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:4px;
+  left:calc(var(--s)*var(--dw) + var(--dw)/2 + 4px);width:calc(var(--n)*var(--dw) - 11px);background:transparent}
+.gap-pill:hover{border-color:var(--accent);color:var(--accent-deep);background:var(--accent-tint)}
+.tl-label .stat{font-size:9.5px;color:var(--faint);margin-top:2px}
 </style>
 <section class="screen" id="s-calendar">
 <div class="wrap-wide">
@@ -391,12 +397,14 @@ a{color:var(--accent-deep);text-decoration:none}
 
     <!-- Дом 1 -->
     <div class="tl-row">
-      <div class="tl-label"><b>Дом 1</b><span>замок 2201</span></div>
+      <div class="tl-label"><b>Дом 1</b><span>замок 2201</span><span class="stat nums">4/16 ноч. · 46 000</span></div>
       <div class="lane-wrap">
         <div class="lane">
           <div class="todaycol"></div>
           <button class="bar ok past" style="--s:0;--n:2" data-open="booking">Анна С. · выезд 12:00</button>
+          <button class="gap-pill" style="--s:2;--n:3" data-open="new">+ 3 ночи</button>
           <button class="bar wait" style="--s:5;--n:2" data-open="booking">Дмитрий К.</button>
+          <button class="gap-pill" style="--s:7;--n:8" data-open="new">+ 8 ночей</button>
         </div>
         <div class="prices nums">
           <div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div>
@@ -406,12 +414,15 @@ a{color:var(--accent-deep);text-decoration:none}
 
     <!-- Дом 3 -->
     <div class="tl-row">
-      <div class="tl-label"><b>Дом 3</b><span>замок 4403</span></div>
+      <div class="tl-label"><b>Дом 3</b><span>замок 4403</span><span class="stat nums">3/16 ноч. · 39 000</span></div>
       <div class="lane-wrap">
         <div class="lane">
           <div class="todaycol"></div>
+          <button class="gap-pill" style="--s:0;--n:2" data-open="new">+ 2 ночи</button>
           <button class="bar ok" style="--s:2;--n:1" data-open="booking">Мария О.</button>
+          <button class="gap-pill" style="--s:3;--n:5" data-open="new">+ 5 ночей</button>
           <button class="bar ok" style="--s:8;--n:2" data-open="booking">Семья Орловых</button>
+          <button class="gap-pill" style="--s:10;--n:5" data-open="new">+ 5 ночей</button>
         </div>
         <div class="prices nums">
           <div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div>
@@ -423,7 +434,7 @@ a{color:var(--accent-deep);text-decoration:none}
   </div>
 
   <p style="font-size:12px;color:var(--faint);margin-top:10px;text-align:center">
-    Лента листается вправо · тап по брони — карточка · тап по пустому месту — новая бронь · бары начинаются с середины дня заезда
+    Лента листается вправо · тап по брони — карточка · тап по «+ N ночей» — новая бронь на эти даты · в реальной версии диапазон выделяется пальцем
   </p>
 </div>
 </section>
@@ -1038,6 +1049,40 @@ a{color:var(--accent-deep);text-decoration:none}
   </div>
 </aside>
 
+<!-- ═══════════ ШТОРКА: НОВАЯ БРОНЬ ═══════════ -->
+<aside class="sheet" id="sheet-new" aria-label="Новая бронь">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <div class="grow">
+      <div class="who" style="font-size:16px">Новая бронь</div>
+      <div class="meta nums">Дом 1 · 4 – 7 июля · 3 ночи</div>
+    </div>
+    <button class="sheet-x" data-close-sheet>✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sheet-sect">
+      <span class="micro">Даты уже выбраны в календаре</span>
+      <div class="facts">
+        <div class="fact"><span class="k">Заезд → выезд</span><b class="nums">4 июля 15:00 → 7 июля 12:00 <span class="edit">изм.</span></b></div>
+        <div class="fact"><span class="k">Стоимость</span><b class="nums">36 000 ₽ <span class="edit" title="13 000 + 13 000 + 10 000">3 ночи</span></b></div>
+        <div class="fact"><span class="k">Залог</span><b class="nums">5 000 ₽ · по ссылке</b></div>
+      </div>
+    </div>
+    <div class="sheet-sect">
+      <span class="micro">Гость</span>
+      <div class="facts">
+        <div class="fact"><span class="k">Имя</span><b style="color:var(--faint);font-weight:500">ввести…</b></div>
+        <div class="fact"><span class="k">Телефон</span><b style="color:var(--faint);font-weight:500">+7…</b></div>
+      </div>
+      <div class="money-note">После создания гостю уйдёт ссылка: оплата, договор, код доступа — всё сам.</div>
+    </div>
+  </div>
+  <div class="sheet-foot">
+    <button class="btn sec" data-close-sheet>Отмена</button>
+    <button class="btn pri" style="flex:2">Создать бронь</button>
+  </div>
+</aside>
+
 <script>
 /* ── прототип: навигация без логики ── */
 const screens = document.querySelectorAll('.screen');
@@ -1046,6 +1091,7 @@ const tabs = document.querySelectorAll('.tab[data-nav]');
 const scrim = document.getElementById('scrim');
 const shBooking = document.getElementById('sheet-booking');
 const shMore = document.getElementById('sheet-more');
+const shNew = document.getElementById('sheet-new');
 
 function go(name){
   if(name === 'more'){ openSheet(shMore); return; }
@@ -1056,12 +1102,13 @@ function go(name){
   window.scrollTo({top:0});
 }
 function openSheet(el){ scrim.classList.add('show'); el.classList.add('show'); }
-function closeSheets(){ scrim.classList.remove('show'); shBooking.classList.remove('show'); shMore.classList.remove('show'); }
+function closeSheets(){ scrim.classList.remove('show'); shBooking.classList.remove('show'); shMore.classList.remove('show'); shNew.classList.remove('show'); }
 
 document.addEventListener('click', e => {
   const nav = e.target.closest('[data-nav]');
   if(nav){ e.preventDefault(); go(nav.dataset.nav); return; }
   if(e.target.closest('[data-open="booking"]')){ openSheet(shBooking); return; }
+  if(e.target.closest('[data-open="new"]') || e.target.closest('.fab') || e.target.closest('.rail-new')){ openSheet(shNew); return; }
   if(e.target.closest('[data-close-sheet]') || e.target === scrim){ closeSheets(); return; }
 });
 
