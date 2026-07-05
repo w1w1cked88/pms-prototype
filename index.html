@@ -363,6 +363,15 @@ a{color:var(--accent-deep);text-decoration:none}
 .ua-chip{position:absolute;top:8px;left:calc(var(--s)*var(--dw) + var(--dw)/2);height:30px;
   display:flex;align-items:center;gap:6px;padding:0 10px;border:1.5px dashed var(--wait);border-radius:9px;
   background:var(--wait-soft);color:var(--wait);font-size:11.5px;font-weight:700}
+.bar::after{content:"";position:absolute;right:3px;top:7px;bottom:7px;width:3px;border-radius:2px;background:rgba(255,255,255,.5)}
+.bar{cursor:grab}
+.pcell{cursor:pointer}
+.pcell:hover{background:var(--accent-tint);color:var(--accent-deep);border-radius:6px}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(96px + env(safe-area-inset-bottom));
+  z-index:70;background:var(--ink);color:var(--surface);font-size:13px;font-weight:600;padding:10px 16px;border-radius:12px;
+  box-shadow:var(--shadow-lift);opacity:0;pointer-events:none;transition:.25s;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%)}
+@media(min-width:1024px){.toast{bottom:28px}}
 </style>
 <section class="screen" id="s-calendar">
 <div class="wrap-wide">
@@ -457,7 +466,7 @@ a{color:var(--accent-deep);text-decoration:none}
   </div>
 
   <p style="font-size:12px;color:var(--faint);margin-top:10px;text-align:center">
-    <b>Зажми и протяни по пустым дням</b> — выделение диапазона и новая бронь · «+ N ночей» — то же одним тапом · края брони тянутся (перенос дат) · тап по цене — тариф/стоп-сейл
+    <b>Мышь: зажми и тяни по свободным дням. Телефон: подержи палец полсекунды — и веди.</b> · Белая полоска на правом краю брони — потяни, продлишь даты · Тап по цене — тариф и стоп-сейл
   </p>
 </div>
 </section>
@@ -1106,6 +1115,33 @@ a{color:var(--accent-deep);text-decoration:none}
   </div>
 </aside>
 
+<!-- ═══════════ ШТОРКА: ТАРИФ ДНЯ ═══════════ -->
+<aside class="sheet" id="sheet-rate" aria-label="Тариф">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <div class="grow">
+      <div class="who" style="font-size:16px">Тариф</div>
+      <div class="meta" id="rate-meta">Дом 1 · 6 июля</div>
+    </div>
+    <button class="sheet-x" data-close-sheet>✕</button>
+  </div>
+  <div class="sheet-body">
+    <div class="sheet-sect">
+      <div class="facts">
+        <div class="fact"><span class="k">Цена за ночь</span><b class="nums">10 000 ₽ <span class="edit">изм.</span></b></div>
+        <div class="fact"><span class="k">Минимум ночей</span><b class="nums">1 <span class="edit">изм.</span></b></div>
+        <div class="fact"><span class="k">Стоп-сейл (закрыть день)</span><span class="toggle off"></span></div>
+      </div>
+      <div class="money-note">Изменить цены сразу на период → кнопка «₽ Цены» в тулбаре календаря.</div>
+    </div>
+  </div>
+  <div class="sheet-foot">
+    <button class="btn sec" data-close-sheet>Отмена</button>
+    <button class="btn pri" style="flex:2" data-close-sheet>Сохранить</button>
+  </div>
+</aside>
+<div class="toast" id="toast"></div>
+
 <script>
 /* ── прототип: навигация без логики ── */
 const screens = document.querySelectorAll('.screen');
@@ -1125,7 +1161,7 @@ function go(name){
   window.scrollTo({top:0});
 }
 function openSheet(el){ scrim.classList.add('show'); el.classList.add('show'); }
-function closeSheets(){ scrim.classList.remove('show'); shBooking.classList.remove('show'); shMore.classList.remove('show'); shNew.classList.remove('show'); }
+function closeSheets(){ scrim.classList.remove('show'); shBooking.classList.remove('show'); shMore.classList.remove('show'); shNew.classList.remove('show'); document.getElementById('sheet-rate').classList.remove('show'); }
 
 document.addEventListener('click', e => {
   const nav = e.target.closest('[data-nav]');
@@ -1146,40 +1182,95 @@ if(closeThread) closeThread.addEventListener('click', () => { threadBox.hidden =
 const mt = document.getElementById('more-toggle');
 if(mt) mt.addEventListener('click', () => document.getElementById('more-body').classList.toggle('open'));
 
-/* drag-select диапазона (демо): мышь — сразу, палец — после удержания */
-const DAYS = ['2 июля','3 июля','4 июля','5 июля','6 июля','7 июля','8 июля','9 июля','10 июля','11 июля','12 июля','13 июля','14 июля','15 июля','16 июля','17 июля','18 июля'];
-const PRICEK = [10,13,13,10,10,10,10,10,13,13,10,10,10,10,10,13];
-document.querySelectorAll('.lane:not([data-nodrag])').forEach((lane, laneIdx) => {
-  let selEl=null, c0=-1, dragging=false, holdTimer=null, startX=0;
-  const dw = () => lane.getBoundingClientRect().width/16;
-  const colAt = x => Math.max(0, Math.min(15, Math.floor((x - lane.getBoundingClientRect().left)/dw())));
+/* ═══ интеракции календаря: drag-create, resize краёв, тариф по тапу ═══ */
+const DAYS=['2 июля','3 июля','4 июля','5 июля','6 июля','7 июля','8 июля','9 июля','10 июля','11 июля','12 июля','13 июля','14 июля','15 июля','16 июля','17 июля','18 июля'];
+const PRICEK=[10,13,13,10,10,10,10,10,13,13,10,10,10,10,10,13];
+const toastEl=document.getElementById('toast');
+let toastT=null;
+function toast(t){ toastEl.textContent=t; toastEl.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>toastEl.classList.remove('show'),2600); }
+function plural(n){ return n+(n===1?' ночь':n<5?' ночи':' ночей'); }
+
+document.querySelectorAll('.lane:not([data-nodrag])').forEach((lane,laneIdx)=>{
+  const house=laneIdx===0?'Дом 1':'Дом 3';
+  let selEl=null,c0=-1,dragging=false,armed=false,holdTimer=null,startX=0,suppress=false;
+  let rsBar=null,rsStartN=0,rsStartX=0; // resize края
+  const dw=()=>lane.getBoundingClientRect().width/16;
+  const colAt=x=>Math.max(0,Math.min(15,Math.floor((x-lane.getBoundingClientRect().left)/dw())));
+
   function paint(c1){
-    const lo=Math.min(c0,c1), n=Math.abs(c1-c0)+1;
+    const lo=Math.min(c0,c1),n=Math.abs(c1-c0)+1;
     if(!selEl){selEl=document.createElement('div');selEl.className='dragsel';lane.appendChild(selEl);}
     selEl.style.left=(lo*dw())+'px'; selEl.style.width=(n*dw())+'px';
-    selEl.textContent=n+(n===1?' ночь':n<5?' ночи':' ночей');
+    selEl.textContent=plural(n);
     return {lo,n};
   }
   function finish(c1){
     const {lo,n}=paint(c1);
     const sum=PRICEK.slice(lo,lo+n).reduce((a,b)=>a+b,0);
     const sh=document.getElementById('sheet-new');
-    sh.querySelector('.sheet-head .meta').textContent=(laneIdx===0?'Дом 1':'Дом 3')+' · '+DAYS[lo]+' – '+DAYS[lo+n]+' · '+n+(n===1?' ночь':n<5?' ночи':' ночей')+' · '+sum+' 000 ₽';
-    openSheet(sh); cleanup();
+    sh.querySelector('.sheet-head .meta').textContent=house+' · '+DAYS[lo]+' – '+DAYS[lo+n]+' · '+plural(n)+' · '+sum+' 000 ₽';
+    openSheet(sh); suppress=true; setTimeout(()=>suppress=false,400); cleanup();
   }
-  function cleanup(){ if(selEl){selEl.remove();selEl=null;} dragging=false; clearTimeout(holdTimer); }
-  lane.addEventListener('pointerdown', e => {
-    if(e.target.closest('.bar')||e.target.closest('.gap-pill')) return;
+  function cleanup(){ if(selEl){selEl.remove();selEl=null;} dragging=false; armed=false; rsBar=null; clearTimeout(holdTimer); }
+
+  lane.addEventListener('pointerdown',e=>{
+    const bar=e.target.closest('.bar');
     startX=e.clientX;
-    if(e.pointerType==='mouse'){ dragging=true; c0=colAt(e.clientX); paint(c0); try{lane.setPointerCapture(e.pointerId);}catch(_){} }
-    else holdTimer=setTimeout(()=>{ dragging=true; c0=colAt(startX); paint(c0); try{lane.setPointerCapture(e.pointerId);}catch(_){} },350);
+    if(bar){
+      const r=bar.getBoundingClientRect();
+      if(e.clientX>r.right-16){ // ручка справа: resize
+        rsBar=bar; rsStartN=parseInt(getComputedStyle(bar).getPropertyValue('--n'))||1; rsStartX=e.clientX;
+        try{lane.setPointerCapture(e.pointerId);}catch(_){}
+        e.preventDefault();
+      }
+      return; // остальной бар — обычный клик (карточка)
+    }
+    // пустая дорожка ИЛИ плашка «+ N ночей»: мышь — drag после 5px, палец — после удержания 300мс
+    if(e.pointerType==='mouse'){ armed=true; c0=colAt(e.clientX); }
+    else holdTimer=setTimeout(()=>{ armed=true; dragging=true; c0=colAt(startX); paint(c0); try{lane.setPointerCapture(e.pointerId);}catch(_){} },300);
   });
-  lane.addEventListener('pointermove', e => {
+  lane.addEventListener('pointermove',e=>{
+    if(rsBar){
+      e.preventDefault();
+      const dCols=Math.round((e.clientX-rsStartX)/dw());
+      const n=Math.max(1,rsStartN+dCols);
+      rsBar.style.setProperty('--n',n);
+      rsBar.dataset.rsn=n;
+      return;
+    }
+    if(armed&&!dragging&&e.pointerType==='mouse'&&Math.abs(e.clientX-startX)>5){
+      dragging=true; paint(c0); try{lane.setPointerCapture(e.pointerId);}catch(_){}
+    }
     if(!dragging){ if(Math.abs(e.clientX-startX)>12) clearTimeout(holdTimer); return; }
     e.preventDefault(); paint(colAt(e.clientX));
   });
-  lane.addEventListener('pointerup', e => { if(dragging) finish(colAt(e.clientX)); else clearTimeout(holdTimer); });
-  lane.addEventListener('pointercancel', cleanup);
+  lane.addEventListener('touchmove',e=>{ if(dragging||rsBar) e.preventDefault(); },{passive:false});
+  lane.addEventListener('pointerup',e=>{
+    clearTimeout(holdTimer);
+    if(rsBar){
+      const n=parseInt(rsBar.dataset.rsn||rsStartN);
+      const s0=parseInt(getComputedStyle(rsBar).getPropertyValue('--s'))||0;
+      if(n!==rsStartN) toast('Выезд перенесён: '+DAYS[s0+n]+' · '+plural(n)+' (демо)');
+      suppress=true; setTimeout(()=>suppress=false,400);
+      rsBar=null; return;
+    }
+    if(dragging) finish(colAt(e.clientX)); else armed=false;
+  });
+  lane.addEventListener('pointercancel',cleanup);
+  lane.addEventListener('click',e=>{ if(suppress){ e.stopPropagation(); e.preventDefault(); } },true);
+});
+
+/* тап по цене → тариф дня */
+document.addEventListener('click',e=>{
+  const pc=e.target.closest('.pcell');
+  if(!pc) return;
+  const cells=[...pc.parentElement.children];
+  const idx=cells.indexOf(pc);
+  const laneWrap=pc.closest('.lane-wrap');
+  const label=laneWrap.parentElement.querySelector('.tl-label b').textContent;
+  document.getElementById('rate-meta').textContent=label+' · '+DAYS[idx];
+  document.querySelector('#sheet-rate .fact b.nums').firstChild.textContent=pc.textContent.trim()+' ₽ ';
+  openSheet(document.getElementById('sheet-rate'));
 });
 
 /* тема */
