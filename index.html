@@ -302,43 +302,54 @@ a{color:var(--accent-deep);text-decoration:none}
 </div>
 </section>
 
-<!-- ═══════════ ЭКРАН: КАЛЕНДАРЬ (шахматка) ═══════════ -->
+<!-- ═══════════ ЭКРАН: КАЛЕНДАРЬ (таймлайн) ═══════════ -->
 <style>
 .cal-tools{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
 .cal-tools .btn{min-height:36px;padding:6px 12px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 2px 10px;font-size:11.5px;color:var(--muted)}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
-.cal{overflow:hidden}
-.cal-head{display:grid;grid-template-columns:64px 1fr 1fr;border-bottom:1px solid var(--line);background:var(--panel)}
-.cal-head div{padding:9px 10px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
-.cal-head div+div{border-left:1px solid var(--line)}
-.cal-row{display:grid;grid-template-columns:64px 1fr 1fr;border-bottom:1px solid var(--line);min-height:56px}
-.cal-row:last-child{border-bottom:none}
-.cal-row.today-row{background:var(--accent-tint)}
-.cal-date{padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
-.cal-date b{font-size:14px;font-weight:700}
-.cal-date span{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
-.cal-date.wknd b{color:var(--accent-deep)}
-.cal-cell{border-left:1px solid var(--line);padding:5px;position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px}
-.cal-cell .price{font-size:10.5px;color:var(--faint);text-align:right;padding-right:3px}
-.stay{border-radius:9px;padding:6px 9px;font-size:12px;font-weight:600;color:#fff;text-align:left;
-  display:flex;align-items:center;gap:6px;width:100%;min-height:34px}
-.stay .st-ic{font-size:10px;opacity:.9}
-.stay.ok{background:var(--ok)}
-.stay.wait{background:var(--wait)}
-.stay.mid{background:transparent;color:var(--ink);border-left:3px solid var(--ok);border-radius:0;
-  font-weight:500;font-size:11.5px;opacity:.75;min-height:24px;padding:2px 9px}
-.stay.mid.w{border-left-color:var(--wait)}
-.cell-free{border:1.5px dashed var(--line-strong);border-radius:9px;min-height:34px;width:100%;
-  color:var(--faint);font-size:16px;display:grid;place-items:center}
-.cell-free:hover{border-color:var(--accent);color:var(--accent)}
-@media(min-width:1024px){
-  .cal-row,.cal-head{grid-template-columns:84px 1fr 1fr}
-}
+/* лента: фикс-колонка домов + горизонтальный скролл дней */
+.tl-card{overflow:hidden}
+.tl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tl{--dw:52px;min-width:calc(72px + var(--dw)*16)}
+@media(min-width:640px){.tl{--dw:64px}}
+@media(min-width:1024px){.tl{--dw:76px;min-width:calc(88px + var(--dw)*16)}}
+.tl-row{display:flex;border-bottom:1px solid var(--line)}
+.tl-row:last-child{border-bottom:none}
+.tl-label{position:sticky;left:0;z-index:5;width:72px;flex-shrink:0;background:var(--card);
+  border-right:1px solid var(--line);display:flex;flex-direction:column;justify-content:center;padding:8px 10px}
+@media(min-width:1024px){.tl-label{width:88px}}
+.tl-label b{font-size:13px;font-weight:700}
+.tl-label span{font-size:10.5px;color:var(--faint)}
+/* шапка дней */
+.tl-head .tl-label{background:var(--panel)}
+.tl-days{display:flex}
+.tl-day{width:var(--dw);flex-shrink:0;text-align:center;padding:7px 0 6px;border-left:1px solid var(--line)}
+.tl-day:first-child{border-left:none}
+.tl-day b{display:block;font-size:13.5px;font-weight:700}
+.tl-day span{font-size:9.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.04em}
+.tl-day.wknd b{color:var(--accent-deep)}
+.tl-day.today{background:var(--accent-tint);border-radius:8px 8px 0 0}
+.tl-day.today span{color:var(--accent-deep);font-weight:700}
+/* дорожка дома */
+.lane-wrap{position:relative;flex:1}
+.lane{position:relative;height:46px;
+  background:repeating-linear-gradient(to right,transparent,transparent calc(var(--dw) - 1px),var(--line) calc(var(--dw) - 1px),var(--line) var(--dw))}
+.lane .todaycol{position:absolute;top:0;bottom:-19px;left:calc(var(--dw)*2);width:var(--dw);background:var(--accent-tint);opacity:.45;pointer-events:none}
+.bar{position:absolute;top:7px;height:32px;border-radius:9px;color:#fff;font-size:11.5px;font-weight:600;
+  display:flex;align-items:center;padding:0 9px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  left:calc(var(--s)*var(--dw) + var(--dw)/2);width:calc(var(--n)*var(--dw) - 3px);box-shadow:var(--shadow)}
+.bar.ok{background:var(--ok)}
+.bar.wait{background:var(--wait)}
+.bar.past{opacity:.45}
+/* цены под дорожкой */
+.prices{display:flex;border-top:1px dashed var(--line)}
+.pcell{width:var(--dw);flex-shrink:0;text-align:center;font-size:9.5px;color:var(--faint);padding:2.5px 0}
+.pcell.wknd{color:var(--wait);font-weight:600}
 </style>
 <section class="screen" id="s-calendar">
-<div class="wrap">
-  <div class="h-page"><h1>Календарь</h1><span class="sub nums">4 — 14 июля</span></div>
+<div class="wrap-wide">
+  <div class="h-page"><h1>Календарь</h1><span class="sub nums">июль · листай ленту →</span></div>
   <div class="cal-tools">
     <button class="btn sec">‹</button>
     <button class="btn sec">Сегодня</button>
@@ -349,78 +360,70 @@ a{color:var(--accent-deep);text-decoration:none}
   <div class="legend">
     <span><i style="background:var(--ok)"></i>Оплачена</span>
     <span><i style="background:var(--wait)"></i>Ждёт оплаты</span>
-    <span><i style="background:transparent;border:1.5px dashed var(--line-strong)"></i>Свободно · тап = бронь</span>
+    <span><i style="background:var(--accent-tint)"></i>Сегодня</span>
   </div>
 
-  <div class="card cal">
-    <div class="cal-head"><div></div><div>Дом 1</div><div>Дом 3</div></div>
-
-    <div class="cal-row today-row">
-      <div class="cal-date wknd"><b>4</b><span>сб · сегодня</span></div>
-      <div class="cal-cell">
-        <button class="stay mid" data-open="booking">Анна С. · до 12:00</button>
-        <div class="price nums">13 000</div>
-      </div>
-      <div class="cal-cell">
-        <button class="stay ok" data-open="booking"><span class="st-ic">▸</span>Мария О. · заезд</button>
-      </div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date wknd"><b>5</b><span>вс</span></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
-      <div class="cal-cell"><button class="stay mid" data-open="booking">Мария О. · до 12:00</button><div class="price nums">13 000</div></div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date"><b>6</b><span>пн</span></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date"><b>7</b><span>вт</span></div>
-      <div class="cal-cell">
-        <button class="stay wait" data-open="booking"><span class="st-ic">▸</span>Дмитрий К.</button>
-      </div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date"><b>8</b><span>ср</span></div>
-      <div class="cal-cell"><button class="stay mid w" data-open="booking">Дмитрий К.</button><div class="price nums">10 000</div></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date"><b>9</b><span>чт</span></div>
-      <div class="cal-cell"><button class="stay mid w" data-open="booking">Дмитрий К. · до 12:00</button><div class="price nums">10 000</div></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
-    </div>
-
-    <div class="cal-row">
-      <div class="cal-date"><b>10</b><span>пт</span></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
-      <div class="cal-cell">
-        <button class="stay ok" data-open="booking"><span class="st-ic">▸</span>Семья Орловых</button>
+  <div class="card tl-card">
+  <div class="tl-scroll">
+  <div class="tl">
+    <!-- шапка: дни -->
+    <div class="tl-row tl-head">
+      <div class="tl-label"><b>Июль</b><span>2026</span></div>
+      <div class="tl-days">
+        <div class="tl-day"><b>2</b><span>чт</span></div>
+        <div class="tl-day"><b>3</b><span>пт</span></div>
+        <div class="tl-day wknd today"><b>4</b><span>сегодня</span></div>
+        <div class="tl-day wknd"><b>5</b><span>вс</span></div>
+        <div class="tl-day"><b>6</b><span>пн</span></div>
+        <div class="tl-day"><b>7</b><span>вт</span></div>
+        <div class="tl-day"><b>8</b><span>ср</span></div>
+        <div class="tl-day"><b>9</b><span>чт</span></div>
+        <div class="tl-day"><b>10</b><span>пт</span></div>
+        <div class="tl-day wknd"><b>11</b><span>сб</span></div>
+        <div class="tl-day wknd"><b>12</b><span>вс</span></div>
+        <div class="tl-day"><b>13</b><span>пн</span></div>
+        <div class="tl-day"><b>14</b><span>вт</span></div>
+        <div class="tl-day"><b>15</b><span>ср</span></div>
+        <div class="tl-day"><b>16</b><span>чт</span></div>
+        <div class="tl-day"><b>17</b><span>пт</span></div>
       </div>
     </div>
 
-    <div class="cal-row">
-      <div class="cal-date wknd"><b>11</b><span>сб</span></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
-      <div class="cal-cell"><button class="stay mid" data-open="booking">Семья Орловых</button><div class="price nums">13 000</div></div>
+    <!-- Дом 1 -->
+    <div class="tl-row">
+      <div class="tl-label"><b>Дом 1</b><span>замок 2201</span></div>
+      <div class="lane-wrap">
+        <div class="lane">
+          <div class="todaycol"></div>
+          <button class="bar ok past" style="--s:0;--n:2" data-open="booking">Анна С. · выезд 12:00</button>
+          <button class="bar wait" style="--s:5;--n:2" data-open="booking">Дмитрий К.</button>
+        </div>
+        <div class="prices nums">
+          <div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div>
+        </div>
+      </div>
     </div>
 
-    <div class="cal-row">
-      <div class="cal-date wknd"><b>12</b><span>вс</span></div>
-      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
-      <div class="cal-cell"><button class="stay mid" data-open="booking">Семья Орловых · до 12:00</button><div class="price nums">13 000</div></div>
+    <!-- Дом 3 -->
+    <div class="tl-row">
+      <div class="tl-label"><b>Дом 3</b><span>замок 4403</span></div>
+      <div class="lane-wrap">
+        <div class="lane">
+          <div class="todaycol"></div>
+          <button class="bar ok" style="--s:2;--n:1" data-open="booking">Мария О.</button>
+          <button class="bar ok" style="--s:8;--n:2" data-open="booking">Семья Орловых</button>
+        </div>
+        <div class="prices nums">
+          <div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div><div class="pcell wknd">13 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell">10 000</div><div class="pcell wknd">13 000</div>
+        </div>
+      </div>
     </div>
+  </div>
+  </div>
   </div>
 
   <p style="font-size:12px;color:var(--faint);margin-top:10px;text-align:center">
-    Тап по свободному дню — новая бронь · тап по брони — карточка · потяни бронь, чтобы продлить
+    Лента листается вправо · тап по брони — карточка · тап по пустому месту — новая бронь · бары начинаются с середины дня заезда
   </p>
 </div>
 </section>
