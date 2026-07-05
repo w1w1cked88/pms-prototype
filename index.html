@@ -1,0 +1,1082 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow">
+<title>Ёлки-Белки · PMS — прототип</title>
+<style>
+/* ═══════════ ТОКЕНЫ ═══════════ */
+:root{
+  --surface:#F5F7F4; --card:#FFFFFF; --panel:#EDF0EA;
+  --ink:#1E2A23; --muted:#5C6B60; --faint:#93A096;
+  --line:#E3E7E0; --line-strong:#CDD5CC;
+  --accent:#2E7D4F; --accent-deep:#235F3C; --accent-tint:#E3F0E8;
+  --ok:#3E8E5A; --ok-soft:#E1F0E6;
+  --wait:#B7791F; --wait-soft:#F7EBD7;
+  --alert:#C24E42; --alert-soft:#F8E4E1;
+  --info:#4A7FA5; --info-soft:#E2EDF5;
+  --shadow:0 1px 2px rgba(30,42,35,.06),0 4px 16px rgba(30,42,35,.05);
+  --shadow-lift:0 4px 12px rgba(30,42,35,.10),0 16px 40px rgba(30,42,35,.12);
+  --r-card:16px; --r-ctrl:10px;
+}
+@media (prefers-color-scheme:dark){:root{
+  --surface:#131813; --card:#1B211B; --panel:#222923;
+  --ink:#E8ECE6; --muted:#9FAC9F; --faint:#6D7A6E;
+  --line:#2A322B; --line-strong:#3A453B;
+  --accent:#58B383; --accent-deep:#79C79D; --accent-tint:#1F3328;
+  --ok:#5CAF7E; --ok-soft:#1E3226;
+  --wait:#D19A4A; --wait-soft:#332A1A;
+  --alert:#D97C6F; --alert-soft:#38221F;
+  --info:#7BA7C7; --info-soft:#1E2B36;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  --shadow-lift:0 6px 16px rgba(0,0,0,.4),0 20px 48px rgba(0,0,0,.45);
+}}
+:root[data-theme="dark"]{
+  --surface:#131813; --card:#1B211B; --panel:#222923;
+  --ink:#E8ECE6; --muted:#9FAC9F; --faint:#6D7A6E;
+  --line:#2A322B; --line-strong:#3A453B;
+  --accent:#58B383; --accent-deep:#79C79D; --accent-tint:#1F3328;
+  --ok:#5CAF7E; --ok-soft:#1E3226;
+  --wait:#D19A4A; --wait-soft:#332A1A;
+  --alert:#D97C6F; --alert-soft:#38221F;
+  --info:#7BA7C7; --info-soft:#1E2B36;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 4px 16px rgba(0,0,0,.25);
+  --shadow-lift:0 6px 16px rgba(0,0,0,.4),0 20px 48px rgba(0,0,0,.45);
+}
+:root[data-theme="light"]{
+  --surface:#F5F7F4; --card:#FFFFFF; --panel:#EDF0EA;
+  --ink:#1E2A23; --muted:#5C6B60; --faint:#93A096;
+  --line:#E3E7E0; --line-strong:#CDD5CC;
+  --accent:#2E7D4F; --accent-deep:#235F3C; --accent-tint:#E3F0E8;
+  --ok:#3E8E5A; --ok-soft:#E1F0E6;
+  --wait:#B7791F; --wait-soft:#F7EBD7;
+  --alert:#C24E42; --alert-soft:#F8E4E1;
+  --info:#4A7FA5; --info-soft:#E2EDF5;
+  --shadow:0 1px 2px rgba(30,42,35,.06),0 4px 16px rgba(30,42,35,.05);
+  --shadow-lift:0 4px 12px rgba(30,42,35,.10),0 16px 40px rgba(30,42,35,.12);
+}
+
+/* ═══════════ БАЗА ═══════════ */
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  background:var(--surface);color:var(--ink);
+  font-size:15px;line-height:1.45;
+  min-height:100dvh;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.nums{font-variant-numeric:tabular-nums}
+.micro{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+a{color:var(--accent-deep);text-decoration:none}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* ═══════════ КАРКАС ═══════════ */
+.app{display:flex;min-height:100dvh}
+.rail{display:none}
+.main{flex:1;min-width:0;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.wrap-wide{max-width:1080px;margin:0 auto;padding:0 16px}
+.screen{display:none;padding-top:14px;animation:fadein .18s ease}
+.screen.active{display:block}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+
+/* десктоп: сайдбар */
+@media (min-width:1024px){
+  .main{padding-bottom:40px}
+  .rail{display:flex;flex-direction:column;gap:2px;width:232px;flex-shrink:0;
+    padding:20px 12px;border-right:1px solid var(--line);position:sticky;top:0;height:100dvh}
+  .tabbar,.fab{display:none!important}
+  .rail-brand{display:flex;align-items:center;gap:10px;padding:6px 10px 18px}
+  .rail-brand .logo{width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:17px}
+  .rail-brand b{font-size:15px;letter-spacing:-.01em}
+  .rail-brand span{display:block;font-size:11.5px;color:var(--faint)}
+  .rail-item{display:flex;align-items:center;gap:11px;padding:9px 10px;border-radius:10px;
+    font-size:14px;font-weight:500;color:var(--muted);text-align:left;width:100%}
+  .rail-item svg{flex-shrink:0}
+  .rail-item:hover{background:var(--panel)}
+  .rail-item.on{background:var(--accent-tint);color:var(--accent-deep);font-weight:600}
+  .rail-sep{margin:12px 10px 6px}
+  .rail-new{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--accent);color:#fff;font-weight:600;font-size:14px;border-radius:12px;padding:11px}
+  .rail-new:hover{background:var(--accent-deep)}
+}
+
+/* мобайл: нижний таб-бар */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:40;
+  display:flex;background:var(--card);border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:9px 0 7px;font-size:10.5px;font-weight:600;color:var(--faint)}
+.tab.on{color:var(--accent-deep)}
+.tab svg{width:23px;height:23px}
+.fab{position:fixed;right:16px;bottom:calc(78px + env(safe-area-inset-bottom));z-index:41;
+  width:54px;height:54px;border-radius:18px;background:var(--accent);color:#fff;
+  box-shadow:var(--shadow-lift);display:grid;place-items:center;font-size:26px;font-weight:400}
+.fab:active{transform:scale(.94)}
+
+/* ═══════════ ОБЩИЕ КОМПОНЕНТЫ ═══════════ */
+.h-page{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:6px 0 14px}
+.h-page h1{font-size:22px;font-weight:800;letter-spacing:-.02em}
+.h-page .sub{font-size:13px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r-card);box-shadow:var(--shadow)}
+.sect{margin-bottom:18px}
+.sect-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+.sect-h .micro{color:var(--muted)}
+.sect-h a{font-size:12.5px;font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+  padding:3px 9px;border-radius:99px;white-space:nowrap}
+.chip.ok{background:var(--ok-soft);color:var(--ok)}
+.chip.wait{background:var(--wait-soft);color:var(--wait)}
+.chip.alert{background:var(--alert-soft);color:var(--alert)}
+.chip.info{background:var(--info-soft);color:var(--info)}
+.chip.plain{background:var(--panel);color:var(--muted)}
+.dot{width:7px;height:7px;border-radius:99px;flex-shrink:0}
+.avatar{width:40px;height:40px;border-radius:12px;background:var(--accent-tint);color:var(--accent-deep);
+  display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  border-radius:var(--r-ctrl);font-size:13.5px;font-weight:600;padding:9px 14px;min-height:40px}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-deep)}
+.btn.sec{background:var(--card);border:1px solid var(--line-strong);color:var(--ink)}
+.btn.sec:hover{background:var(--panel)}
+.btn.ghost{color:var(--muted)}
+.btn.danger{color:var(--alert)}
+.seg{display:inline-flex;background:var(--panel);border-radius:11px;padding:3px;gap:2px}
+.seg button{padding:6px 13px;border-radius:8px;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button.on{background:var(--card);color:var(--ink);box-shadow:var(--shadow)}
+.row{display:flex;align-items:center;gap:12px}
+.grow{flex:1;min-width:0}
+.trunc{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ═══════════ СЕГОДНЯ ═══════════ */
+.hero-date{margin:2px 0 16px}
+.hero-date .dow{font-size:13px;font-weight:600;color:var(--accent-deep)}
+.hero-date h1{font-size:26px;font-weight:800;letter-spacing:-.025em;margin-top:1px}
+.hero-date .st{font-size:13px;color:var(--muted);margin-top:3px}
+
+.attn{border-left:4px solid var(--alert);border-radius:var(--r-card);overflow:hidden}
+.attn-row{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left}
+.attn-row + .attn-row{border-top:1px solid var(--line)}
+.attn-row:hover{background:var(--panel)}
+.attn-row .why{font-size:12.5px;color:var(--alert);font-weight:600}
+.attn-row .who{font-size:14.5px;font-weight:600}
+.attn-row .meta{font-size:12.5px;color:var(--muted)}
+
+.move-card{padding:14px;width:100%;text-align:left}
+.move-card + .move-card{border-top:1px solid var(--line)}
+.move-card:hover{background:var(--panel)}
+.move-top{display:flex;align-items:center;gap:12px}
+.move-top .who{font-size:15px;font-weight:700}
+.move-top .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+.move-top .when{margin-left:auto;text-align:right}
+.move-top .when b{font-size:15px;font-weight:700}
+.move-top .when span{display:block;font-size:11px;color:var(--faint)}
+.readychips{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.rchip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;
+  padding:3px 8px;border-radius:7px;background:var(--ok-soft);color:var(--ok)}
+.rchip.no{background:var(--wait-soft);color:var(--wait)}
+.allready{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:var(--ok);margin-top:10px}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.kpi{padding:12px 13px}
+.kpi .v{font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+.kpi .d{font-size:11.5px;color:var(--muted);margin-top:1px}
+.kpi .up{color:var(--ok);font-weight:700}
+@media(min-width:640px){.kpi .v{font-size:22px}}
+
+.quiet-note{display:flex;gap:10px;align-items:center;padding:14px;color:var(--muted);font-size:13.5px}
+</style>
+
+<div class="app">
+<!-- ═══ САЙДБАР (десктоп) ═══ -->
+<nav class="rail">
+  <div class="rail-brand">
+    <div class="logo">🌲</div>
+    <div><b>Ёлки-Белки</b><span>2 дома · Малые Соли</span></div>
+  </div>
+  <button class="rail-item on" data-nav="today"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Сегодня</button>
+  <button class="rail-item" data-nav="calendar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Календарь</button>
+  <button class="rail-item" data-nav="bookings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Брони</button>
+  <button class="rail-item" data-nav="inbox"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>Чаты<span class="chip alert" style="margin-left:auto;font-size:10.5px;padding:1px 7px">2</span></button>
+  <button class="rail-item" data-nav="guests"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.6a3.5 3.5 0 0 1 0 6.8M21 20c0-2.6-1.6-4.8-4-5.7"/></svg>Гости</button>
+  <div class="rail-sep micro">Хозяйство</div>
+  <button class="rail-item" data-nav="finance"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="7" width="18" height="13" rx="3"/><path d="M3 11h18M8 3.5 12 7l4-3.5"/></svg>Финансы</button>
+  <button class="rail-item" data-nav="tasks"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/><path d="M5 19h14" opacity=".4"/></svg>Уборка</button>
+  <button class="rail-item" data-nav="settings"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>Настройки</button>
+  <button class="rail-new">+ Новая бронь</button>
+</nav>
+
+<main class="main">
+
+<!-- ═══════════ ЭКРАН: СЕГОДНЯ ═══════════ -->
+<section class="screen active" id="s-today">
+<div class="wrap">
+  <div class="hero-date">
+    <div class="dow">Суббота</div>
+    <h1>4 июля</h1>
+    <div class="st">Оба дома заняты · автопилот работает</div>
+  </div>
+
+  <!-- Требует внимания: только когда есть что. Первым делом. -->
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Требует внимания · 2</span></div>
+    <div class="card attn">
+      <button class="attn-row" data-open="booking">
+        <div class="avatar" style="background:var(--alert-soft);color:var(--alert)">МО</div>
+        <div class="grow">
+          <div class="why">Не внесён залог — заезд сегодня</div>
+          <div class="who">Мария Орлова <span class="meta">· Дом 3 · заезд 15:00</span></div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+      <button class="attn-row" data-open="booking">
+        <div class="avatar" style="background:var(--wait-soft);color:var(--wait)">ДК</div>
+        <div class="grow">
+          <div class="why">Договор не подписан — заезд завтра</div>
+          <div class="who">Дмитрий Ковалёв <span class="meta">· Дом 1 · завтра 15:00</span></div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Заезжают сегодня -->
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Заезжают сегодня · 1</span></div>
+    <div class="card">
+      <button class="move-card" data-open="booking">
+        <div class="move-top">
+          <div class="avatar">МО</div>
+          <div class="grow">
+            <div class="who">Мария Орлова</div>
+            <div class="meta">Дом 3 · 2 гостя · Авито · 1 ночь</div>
+          </div>
+          <div class="when nums"><b>15:00</b><span>заезд</span></div>
+        </div>
+        <div class="readychips">
+          <span class="rchip">✓ Оплата</span>
+          <span class="rchip">✓ Паспорт</span>
+          <span class="rchip">✓ Договор</span>
+          <span class="rchip no">Залог</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Выезжают сегодня -->
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Выезжают сегодня · 1</span></div>
+    <div class="card">
+      <button class="move-card" data-open="booking">
+        <div class="move-top">
+          <div class="avatar">АС</div>
+          <div class="grow">
+            <div class="who">Анна Смирнова</div>
+            <div class="meta">Дом 1 · всё оплачено · залог 5 000 ₽ заморожен</div>
+          </div>
+          <div class="when nums"><b>до 12:00</b><span>выезд</span></div>
+        </div>
+        <div class="readychips">
+          <span class="allready" style="margin-top:0">После выезда: вернуть залог · уборка</span>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Деньги месяца: компактно, без декора -->
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Июль</span><a href="#" data-nav="finance">Финансы →</a></div>
+    <div class="kpi-strip">
+      <div class="card kpi"><div class="micro">Получено</div><div class="v nums">86 000 ₽</div><div class="d"><span class="up">+18%</span> к июню</div></div>
+      <div class="card kpi"><div class="micro">Ночей занято</div><div class="v nums">7 из 8</div><div class="d">оба дома</div></div>
+      <div class="card kpi"><div class="micro">Броней</div><div class="v nums">5</div><div class="d">3 Авито · 2 прямые</div></div>
+    </div>
+  </div>
+
+  <!-- Автопилот: одна спокойная строка -->
+  <div class="sect">
+    <div class="card quiet-note">
+      <span class="dot" style="background:var(--ok)"></span>
+      Автопилот: за сутки отправлено 6 сообщений, доставлены все.
+      <a href="#" data-nav="settings" style="margin-left:auto;flex-shrink:0">Настроить</a>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: КАЛЕНДАРЬ (шахматка) ═══════════ -->
+<style>
+.cal-tools{display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.cal-tools .btn{min-height:36px;padding:6px 12px}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin:0 2px 10px;font-size:11.5px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.cal{overflow:hidden}
+.cal-head{display:grid;grid-template-columns:64px 1fr 1fr;border-bottom:1px solid var(--line);background:var(--panel)}
+.cal-head div{padding:9px 10px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.cal-head div+div{border-left:1px solid var(--line)}
+.cal-row{display:grid;grid-template-columns:64px 1fr 1fr;border-bottom:1px solid var(--line);min-height:56px}
+.cal-row:last-child{border-bottom:none}
+.cal-row.today-row{background:var(--accent-tint)}
+.cal-date{padding:8px 10px;display:flex;flex-direction:column;justify-content:center}
+.cal-date b{font-size:14px;font-weight:700}
+.cal-date span{font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.05em}
+.cal-date.wknd b{color:var(--accent-deep)}
+.cal-cell{border-left:1px solid var(--line);padding:5px;position:relative;display:flex;flex-direction:column;justify-content:center;gap:3px}
+.cal-cell .price{font-size:10.5px;color:var(--faint);text-align:right;padding-right:3px}
+.stay{border-radius:9px;padding:6px 9px;font-size:12px;font-weight:600;color:#fff;text-align:left;
+  display:flex;align-items:center;gap:6px;width:100%;min-height:34px}
+.stay .st-ic{font-size:10px;opacity:.9}
+.stay.ok{background:var(--ok)}
+.stay.wait{background:var(--wait)}
+.stay.mid{background:transparent;color:var(--ink);border-left:3px solid var(--ok);border-radius:0;
+  font-weight:500;font-size:11.5px;opacity:.75;min-height:24px;padding:2px 9px}
+.stay.mid.w{border-left-color:var(--wait)}
+.cell-free{border:1.5px dashed var(--line-strong);border-radius:9px;min-height:34px;width:100%;
+  color:var(--faint);font-size:16px;display:grid;place-items:center}
+.cell-free:hover{border-color:var(--accent);color:var(--accent)}
+@media(min-width:1024px){
+  .cal-row,.cal-head{grid-template-columns:84px 1fr 1fr}
+}
+</style>
+<section class="screen" id="s-calendar">
+<div class="wrap">
+  <div class="h-page"><h1>Календарь</h1><span class="sub nums">4 — 14 июля</span></div>
+  <div class="cal-tools">
+    <button class="btn sec">‹</button>
+    <button class="btn sec">Сегодня</button>
+    <button class="btn sec">›</button>
+    <span class="grow"></span>
+    <button class="btn sec">₽ Цены</button>
+  </div>
+  <div class="legend">
+    <span><i style="background:var(--ok)"></i>Оплачена</span>
+    <span><i style="background:var(--wait)"></i>Ждёт оплаты</span>
+    <span><i style="background:transparent;border:1.5px dashed var(--line-strong)"></i>Свободно · тап = бронь</span>
+  </div>
+
+  <div class="card cal">
+    <div class="cal-head"><div></div><div>Дом 1</div><div>Дом 3</div></div>
+
+    <div class="cal-row today-row">
+      <div class="cal-date wknd"><b>4</b><span>сб · сегодня</span></div>
+      <div class="cal-cell">
+        <button class="stay mid" data-open="booking">Анна С. · до 12:00</button>
+        <div class="price nums">13 000</div>
+      </div>
+      <div class="cal-cell">
+        <button class="stay ok" data-open="booking"><span class="st-ic">▸</span>Мария О. · заезд</button>
+      </div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date wknd"><b>5</b><span>вс</span></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
+      <div class="cal-cell"><button class="stay mid" data-open="booking">Мария О. · до 12:00</button><div class="price nums">13 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date"><b>6</b><span>пн</span></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date"><b>7</b><span>вт</span></div>
+      <div class="cal-cell">
+        <button class="stay wait" data-open="booking"><span class="st-ic">▸</span>Дмитрий К.</button>
+      </div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date"><b>8</b><span>ср</span></div>
+      <div class="cal-cell"><button class="stay mid w" data-open="booking">Дмитрий К.</button><div class="price nums">10 000</div></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date"><b>9</b><span>чт</span></div>
+      <div class="cal-cell"><button class="stay mid w" data-open="booking">Дмитрий К. · до 12:00</button><div class="price nums">10 000</div></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">10 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date"><b>10</b><span>пт</span></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
+      <div class="cal-cell">
+        <button class="stay ok" data-open="booking"><span class="st-ic">▸</span>Семья Орловых</button>
+      </div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date wknd"><b>11</b><span>сб</span></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
+      <div class="cal-cell"><button class="stay mid" data-open="booking">Семья Орловых</button><div class="price nums">13 000</div></div>
+    </div>
+
+    <div class="cal-row">
+      <div class="cal-date wknd"><b>12</b><span>вс</span></div>
+      <div class="cal-cell"><button class="cell-free">+</button><div class="price nums">13 000</div></div>
+      <div class="cal-cell"><button class="stay mid" data-open="booking">Семья Орловых · до 12:00</button><div class="price nums">13 000</div></div>
+    </div>
+  </div>
+
+  <p style="font-size:12px;color:var(--faint);margin-top:10px;text-align:center">
+    Тап по свободному дню — новая бронь · тап по брони — карточка · потяни бронь, чтобы продлить
+  </p>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: БРОНИ ═══════════ -->
+<style>
+.bk-tools{display:flex;gap:8px;margin-bottom:12px}
+.search{flex:1;display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:var(--r-ctrl);padding:9px 12px;color:var(--faint);font-size:13.5px}
+.bk-item{display:flex;align-items:center;gap:12px;padding:13px 14px;width:100%;text-align:left}
+.bk-item + .bk-item{border-top:1px solid var(--line)}
+.bk-item:hover{background:var(--panel)}
+.bk-item .who{font-size:14.5px;font-weight:700}
+.bk-item .meta{font-size:12.5px;color:var(--muted);margin-top:1px}
+.bk-item .right{text-align:right;flex-shrink:0}
+.bk-item .sum{font-size:14px;font-weight:700}
+.bk-dots{display:flex;gap:3px;margin-top:5px;justify-content:flex-end}
+.bk-dots .dot{width:6px;height:6px}
+.src{display:inline-flex;align-items:center;font-size:10.5px;font-weight:700;padding:1px 6px;border-radius:5px;
+  background:var(--info-soft);color:var(--info);vertical-align:1px}
+.src.direct{background:var(--accent-tint);color:var(--accent-deep)}
+</style>
+<section class="screen" id="s-bookings">
+<div class="wrap">
+  <div class="h-page"><h1>Брони</h1><span class="sub">5 активных</span></div>
+  <div class="bk-tools">
+    <div class="search">⌕&nbsp; Имя, телефон, даты…</div>
+    <button class="btn sec">Фильтр</button>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Сейчас в домах · 2</span></div>
+    <div class="card">
+      <button class="bk-item" data-open="booking">
+        <div class="avatar">АС</div>
+        <div class="grow">
+          <div class="who">Анна Смирнова <span class="src direct">прямая</span></div>
+          <div class="meta">Дом 1 · 2 – 4 июля · выезд сегодня до 12:00</div>
+        </div>
+        <div class="right nums">
+          <div class="sum">26 000 ₽</div>
+          <div class="bk-dots"><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--ok)"></span></div>
+        </div>
+      </button>
+      <button class="bk-item" data-open="booking">
+        <div class="avatar">МО</div>
+        <div class="grow">
+          <div class="who">Мария Орлова <span class="src">Авито</span></div>
+          <div class="meta">Дом 3 · 4 – 5 июля · заезд сегодня 15:00</div>
+        </div>
+        <div class="right nums">
+          <div class="sum">13 000 ₽</div>
+          <div class="bk-dots"><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--wait)"></span></div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Скоро · 2</span></div>
+    <div class="card">
+      <button class="bk-item" data-open="booking">
+        <div class="avatar">ДК</div>
+        <div class="grow">
+          <div class="who">Дмитрий Ковалёв <span class="src direct">прямая</span></div>
+          <div class="meta">Дом 1 · 7 – 9 июля · через 3 дня</div>
+        </div>
+        <div class="right nums">
+          <div class="sum">20 000 ₽</div>
+          <div class="bk-dots"><span class="dot" style="background:var(--wait)"></span><span class="dot" style="background:var(--wait)"></span><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--wait)"></span></div>
+        </div>
+      </button>
+      <button class="bk-item" data-open="booking">
+        <div class="avatar">СО</div>
+        <div class="grow">
+          <div class="who">Семья Орловых <span class="src">Авито</span></div>
+          <div class="meta">Дом 3 · 10 – 12 июля · через 6 дней</div>
+        </div>
+        <div class="right nums">
+          <div class="sum">26 000 ₽</div>
+          <div class="bk-dots"><span class="dot" style="background:var(--ok)"></span><span class="dot" style="background:var(--faint)"></span><span class="dot" style="background:var(--faint)"></span><span class="dot" style="background:var(--faint)"></span></div>
+        </div>
+      </button>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Завершённые · июль</span><a href="#">Все →</a></div>
+    <div class="card">
+      <button class="bk-item" data-open="booking" style="opacity:.65">
+        <div class="avatar" style="background:var(--panel);color:var(--faint)">ЕГ</div>
+        <div class="grow">
+          <div class="who">Ольга Н.</div>
+          <div class="meta">Дом 1 · 28 – 29 июня · выехала</div>
+        </div>
+        <div class="right nums"><div class="sum">12 000 ₽</div></div>
+      </button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: ЧАТЫ ═══════════ -->
+<style>
+.dlg{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;width:100%;text-align:left}
+.dlg + .dlg{border-top:1px solid var(--line)}
+.dlg:hover{background:var(--panel)}
+.dlg .who{font-size:14.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.dlg .prev{font-size:13px;color:var(--muted);margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.dlg .t{font-size:11.5px;color:var(--faint);flex-shrink:0;padding-top:2px}
+.unread{width:9px;height:9px;border-radius:99px;background:var(--accent);flex-shrink:0;margin-top:6px}
+.autobadge{font-size:10px;font-weight:700;letter-spacing:.04em;background:var(--panel);color:var(--faint);
+  border-radius:5px;padding:1px 6px;text-transform:uppercase}
+/* тред */
+.thread{display:flex;flex-direction:column;gap:0}
+.thr-pin{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--line);background:var(--panel);border-radius:var(--r-card) var(--r-card) 0 0}
+.thr-pin .who{font-weight:700;font-size:13.5px}
+.thr-pin .meta{font-size:11.5px;color:var(--muted)}
+.msgs{display:flex;flex-direction:column;gap:10px;padding:16px 14px;min-height:200px}
+.msg{max-width:82%;padding:9px 13px;border-radius:14px;font-size:13.5px;line-height:1.45}
+.msg.in{background:var(--panel);border-bottom-left-radius:5px;align-self:flex-start}
+.msg.out{background:var(--accent-tint);color:var(--ink);border-bottom-right-radius:5px;align-self:flex-end}
+.msg .m-meta{display:flex;gap:6px;align-items:center;font-size:10.5px;color:var(--faint);margin-top:4px}
+.compose{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line)}
+.compose input{flex:1;border:1px solid var(--line);background:var(--surface);border-radius:11px;padding:10px 13px;font:inherit;font-size:13.5px;color:var(--ink);outline:none}
+.compose input:focus{border-color:var(--accent)}
+.compose .send{width:42px;height:42px;border-radius:11px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:16px}
+</style>
+<section class="screen" id="s-inbox">
+<div class="wrap">
+  <div class="h-page"><h1>Чаты</h1><span class="sub">2 непрочитанных</span></div>
+
+  <div class="sect" id="dlg-list">
+    <div class="card">
+      <button class="dlg" id="open-thread">
+        <div class="avatar">МО</div>
+        <div class="grow">
+          <div class="who">Мария Орлова <span class="chip info" style="font-size:10.5px;padding:1px 7px">Авито</span></div>
+          <div class="prev">А можно приехать чуть раньше, к 14:00?</div>
+        </div>
+        <div class="t nums">12:41</div>
+        <span class="unread"></span>
+      </button>
+      <button class="dlg">
+        <div class="avatar">ДК</div>
+        <div class="grow">
+          <div class="who">Дмитрий Ковалёв</div>
+          <div class="prev">Добрый день! Подскажите, парковка у дома есть?</div>
+        </div>
+        <div class="t nums">09:17</div>
+        <span class="unread"></span>
+      </button>
+      <button class="dlg">
+        <div class="avatar" style="background:var(--panel);color:var(--faint)">АС</div>
+        <div class="grow">
+          <div class="who">Анна Смирнова <span class="autobadge">авто</span></div>
+          <div class="prev">Автопилот: напоминание о выезде до 12:00 · доставлено</div>
+        </div>
+        <div class="t nums">08:00</div>
+      </button>
+      <button class="dlg">
+        <div class="avatar" style="background:var(--panel);color:var(--faint)">СО</div>
+        <div class="grow">
+          <div class="who">Семья Орловых <span class="autobadge">авто</span></div>
+          <div class="prev">Автопилот: приветствие после брони · доставлено</div>
+        </div>
+        <div class="t">вчера</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- открытый тред (в прототипе показан сразу под списком) -->
+  <div class="sect" id="thread-box" hidden>
+    <div class="sect-h"><span class="micro">Диалог</span><button class="btn ghost" id="close-thread" style="min-height:28px;padding:2px 8px">← к списку</button></div>
+    <div class="card thread">
+      <button class="thr-pin" data-open="booking">
+        <div class="avatar" style="width:34px;height:34px">МО</div>
+        <div class="grow">
+          <div class="who">Мария Орлова · Дом 3 · 4–5 июля</div>
+          <div class="meta">заезд сегодня 15:00 · оплачено · залог ждёт</div>
+        </div>
+        <span class="micro" style="color:var(--faint)">карточка ›</span>
+      </button>
+      <div class="msgs">
+        <div class="msg out">Мария, здравствуйте! Ваша бронь подтверждена ✅ Заезд 4 июля с 15:00. За 90 минут до заезда пришлём код от дома.<div class="m-meta"><span class="autobadge">авто</span> вчера 18:02 · доставлено</div></div>
+        <div class="msg in">Спасибо! А можно приехать чуть раньше, к 14:00?<div class="m-meta">сегодня 12:41</div></div>
+      </div>
+      <div class="compose">
+        <input placeholder="Написать в чат Авито…">
+        <button class="send">➤</button>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: ФИНАНСЫ ═══════════ -->
+<style>
+.fin-hero{padding:18px 16px 16px}
+.fin-hero .micro{color:rgba(255,255,255,.75)}
+.fin-hero{background:linear-gradient(135deg,var(--accent-deep),var(--accent));color:#fff;border:none}
+.fin-hero .big{font-size:34px;font-weight:800;letter-spacing:-.03em;margin-top:6px}
+.fin-hero .rowline{display:flex;justify-content:space-between;font-size:13px;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.25)}
+.fin-hero .rowline b{font-weight:700}
+.fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.tx{display:flex;align-items:center;gap:12px;padding:12px 14px}
+.tx + .tx{border-top:1px solid var(--line)}
+.tx .ic{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;font-size:15px;flex-shrink:0}
+.tx .name{font-size:13.5px;font-weight:600}
+.tx .meta{font-size:11.5px;color:var(--muted)}
+.tx .amt{margin-left:auto;font-size:14px;font-weight:700;flex-shrink:0}
+.tx .amt.minus{color:var(--muted)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:88px;padding:14px 14px 6px}
+.bars .b{flex:1;background:var(--accent);border-radius:4px 4px 0 0;opacity:.9;min-height:6px}
+.bars .b.dim{background:var(--panel)}
+.bars-x{display:flex;gap:6px;padding:0 14px 12px}
+.bars-x span{flex:1;text-align:center;font-size:10px;color:var(--faint)}
+</style>
+<section class="screen" id="s-finance">
+<div class="wrap">
+  <div class="h-page"><h1>Финансы</h1>
+    <div class="seg"><button class="on">Июль</button><button>Июнь</button><button>Год</button></div>
+  </div>
+
+  <div class="sect">
+    <div class="card fin-hero">
+      <div class="micro">Можно вывести сейчас</div>
+      <div class="big nums">61 400 ₽</div>
+      <div class="rowline nums"><span>Придёт от ЮKassa</span><b>24 600 ₽</b></div>
+      <div class="rowline nums" style="border:none;margin-top:6px;padding-top:0"><span>Залоги (вернутся гостям)</span><b>10 000 ₽</b></div>
+    </div>
+    <div class="fin-grid">
+      <div class="card kpi"><div class="micro">Получено за июль</div><div class="v nums">86 000 ₽</div><div class="d"><span class="up">+18%</span> к июню</div></div>
+      <div class="card kpi"><div class="micro">Средняя ночь</div><div class="v nums">12 300 ₽</div><div class="d">7 ночей продано</div></div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Выручка по неделям</span></div>
+    <div class="card">
+      <div class="bars" aria-hidden="true">
+        <div class="b dim" style="height:38%"></div>
+        <div class="b dim" style="height:56%"></div>
+        <div class="b" style="height:74%"></div>
+        <div class="b" style="height:100%"></div>
+        <div class="b dim" style="height:12%"></div>
+      </div>
+      <div class="bars-x"><span>1–7 июн</span><span>8–14</span><span>22–28</span><span>29–5 июл</span><span>6–12</span></div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Последние операции</span><a href="#">Все →</a></div>
+    <div class="card">
+      <div class="tx">
+        <div class="ic" style="background:var(--ok-soft);color:var(--ok)">₽</div>
+        <div><div class="name">Оплата · Мария Орлова</div><div class="meta">вчера · Авито · Дом 3</div></div>
+        <div class="amt nums">+13 000 ₽</div>
+      </div>
+      <div class="tx">
+        <div class="ic" style="background:var(--info-soft);color:var(--info)">🛡</div>
+        <div><div class="name">Залог заморожен · Анна Смирнова</div><div class="meta">2 июля · вернётся после выезда</div></div>
+        <div class="amt nums">5 000 ₽</div>
+      </div>
+      <div class="tx">
+        <div class="ic" style="background:var(--ok-soft);color:var(--ok)">₽</div>
+        <div><div class="name">Оплата · Анна Смирнова</div><div class="meta">2 июля · прямая · Дом 1</div></div>
+        <div class="amt nums">+26 000 ₽</div>
+      </div>
+      <div class="tx">
+        <div class="ic" style="background:var(--panel);color:var(--muted)">↩</div>
+        <div><div class="name">Залог возвращён · Ольга Н.</div><div class="meta">29 июня · выезд без замечаний</div></div>
+        <div class="amt nums minus">−5 000 ₽</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Отчёты</span></div>
+    <div class="card">
+      <button class="tx"><div class="ic" style="background:var(--panel)">🧾</div><div><div class="name">Чеки самозанятого</div><div class="meta">июль · 3 чека</div></div><span class="amt" style="color:var(--faint)">›</span></button>
+      <button class="tx"><div class="ic" style="background:var(--panel)">🏦</div><div><div class="name">Выплаты ЮKassa на счёт</div><div class="meta">последняя — 1 июля</div></div><span class="amt" style="color:var(--faint)">›</span></button>
+      <button class="tx"><div class="ic" style="background:var(--panel)">⚡</div><div><div class="name">Счётчики и расчёты с собственниками</div><div class="meta">снять показания до 5 июля</div></div><span class="amt" style="color:var(--faint)">›</span></button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: ГОСТИ ═══════════ -->
+<section class="screen" id="s-guests">
+<div class="wrap">
+  <div class="h-page"><h1>Гости</h1><span class="sub">28 в базе</span></div>
+  <div class="bk-tools">
+    <div class="search">⌕&nbsp; Имя или телефон…</div>
+  </div>
+  <div class="sect">
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <span class="chip plain" style="background:var(--accent-tint);color:var(--accent-deep)">Все · 28</span>
+      <span class="chip plain">Постоянные · 6</span>
+      <span class="chip plain">Сейчас живут · 2</span>
+    </div>
+    <div class="card">
+      <button class="bk-item" data-open="booking">
+        <div class="avatar">АС</div>
+        <div class="grow">
+          <div class="who">Анна Смирнова <span class="chip ok" style="font-size:10.5px;padding:1px 7px">✓ проверена</span></div>
+          <div class="meta">2 визита · 52 000 ₽ · сейчас в Доме 1</div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+      <button class="bk-item">
+        <div class="avatar">МО</div>
+        <div class="grow">
+          <div class="who">Мария Орлова</div>
+          <div class="meta">1 визит · 13 000 ₽ · Авито</div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+      <button class="bk-item">
+        <div class="avatar" style="background:var(--wait-soft);color:var(--wait)">ИП</div>
+        <div class="grow">
+          <div class="who">Игорь Петров <span class="chip plain" style="font-size:10.5px;padding:1px 7px">постоянный</span></div>
+          <div class="meta">4 визита · 96 000 ₽ · был в июне</div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+      <button class="bk-item">
+        <div class="avatar" style="background:var(--panel);color:var(--faint)">ЕГ</div>
+        <div class="grow">
+          <div class="who">Ольга Н.</div>
+          <div class="meta">1 визит · 12 000 ₽ · была в июне</div>
+        </div>
+        <span class="micro" style="color:var(--faint)">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: УБОРКА ═══════════ -->
+<style>
+.task{display:flex;align-items:center;gap:12px;padding:13px 14px}
+.task + .task{border-top:1px solid var(--line)}
+.task .tick{width:26px;height:26px;border-radius:9px;border:2px solid var(--line-strong);flex-shrink:0;display:grid;place-items:center;color:#fff;font-size:13px}
+.task.done .tick{background:var(--ok);border-color:var(--ok)}
+.task.done .name{text-decoration:line-through;color:var(--muted)}
+.task .name{font-size:14px;font-weight:600}
+.task .meta{font-size:12px;color:var(--muted)}
+</style>
+<section class="screen" id="s-tasks">
+<div class="wrap">
+  <div class="h-page"><h1>Уборка</h1><button class="btn sec">+ Задача</button></div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Сегодня</span></div>
+    <div class="card">
+      <div class="task">
+        <div class="tick"></div>
+        <div class="grow">
+          <div class="name">Дом 1 — после Анны Смирновой</div>
+          <div class="meta">после 12:00 · Оксана · вернуть залог после проверки</div>
+        </div>
+        <span class="chip wait">ждёт выезда</span>
+      </div>
+      <div class="task done">
+        <div class="tick">✓</div>
+        <div class="grow">
+          <div class="name">Дом 3 — к заезду Марии</div>
+          <div class="meta">готово в 11:20 · Оксана</div>
+        </div>
+        <span class="chip ok">готово</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Кабинет уборщицы</span></div>
+    <div class="card quiet-note">
+      <span class="dot" style="background:var(--ok)"></span>
+      У Оксаны своя ссылка-кабинет: принимает дом и возвращает залог по PIN.
+      <a href="#" style="margin-left:auto;flex-shrink:0">Ссылка</a>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Обслуживание · 1</span></div>
+    <div class="card">
+      <div class="task">
+        <div class="tick"></div>
+        <div class="grow">
+          <div class="name">Дом 3 — заменить лампу на террасе</div>
+          <div class="meta">не срочно · добавлено 1 июля</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ═══════════ ЭКРАН: НАСТРОЙКИ ═══════════ -->
+<style>
+.set-row{display:flex;align-items:center;gap:12px;padding:14px;width:100%;text-align:left}
+.set-row + .set-row{border-top:1px solid var(--line)}
+.set-row:hover{background:var(--panel)}
+.set-row .ic{width:38px;height:38px;border-radius:11px;background:var(--panel);display:grid;place-items:center;font-size:16px;flex-shrink:0}
+.set-row .name{font-size:14px;font-weight:600}
+.set-row .meta{font-size:12px;color:var(--muted);margin-top:1px}
+.toggle{width:44px;height:26px;border-radius:99px;background:var(--accent);position:relative;flex-shrink:0}
+.toggle::after{content:"";position:absolute;top:3px;left:21px;width:20px;height:20px;border-radius:99px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.toggle.off{background:var(--line-strong)}
+.toggle.off::after{left:3px}
+</style>
+<section class="screen" id="s-settings">
+<div class="wrap">
+  <div class="h-page"><h1>Настройки</h1></div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Автопилот</span></div>
+    <div class="card">
+      <div class="set-row"><div class="ic">🤖</div><div class="grow"><div class="name">Автопилот гостя</div><div class="meta">приветствие · оплата · код доступа · отзыв</div></div><span class="toggle"></span></div>
+      <button class="set-row"><div class="ic">✉️</div><div class="grow"><div class="name">Тексты сообщений</div><div class="meta">9 шаблонов · SMS, e-mail и чат Авито</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row"><div class="ic">📜</div><div class="grow"><div class="name">Журнал: что отправлено</div><div class="meta">6 сообщений за сутки</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Правила заселения</span></div>
+    <div class="card">
+      <button class="set-row"><div class="ic">📄</div><div class="grow"><div class="name">Договор и паспорт</div><div class="meta">эл. подпись ОкиДоки · для всех броней</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row"><div class="ic">🛡</div><div class="grow"><div class="name">Залог</div><div class="meta">5 000 ₽ · заморозка на карте или наличными</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row"><div class="ic">🔑</div><div class="grow"><div class="name">Доступ в дом</div><div class="meta">код замка за 90 мин до заезда · ворота КП</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-h"><span class="micro">Объект и продажи</span></div>
+    <div class="card">
+      <button class="set-row"><div class="ic">🏠</div><div class="grow"><div class="name">Дома и цены</div><div class="meta">Дом 1 · Дом 3 · выходные +30%</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row"><div class="ic">🔗</div><div class="grow"><div class="name">Площадки</div><div class="meta">Авито подключён · синк 5 мин назад</div></div><span class="chip ok">ок</span></button>
+      <button class="set-row"><div class="ic">🎁</div><div class="grow"><div class="name">Допуслуги, промокоды, сертификаты</div><div class="meta">чан · веники · 2 акции</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row"><div class="ic">💳</div><div class="grow"><div class="name">Приём оплат</div><div class="meta">ЮKassa · чеки НПД автоматически</div></div><span class="chip ok">ок</span></button>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="card quiet-note">
+      <span>🌗</span> Тема интерфейса
+      <span class="grow"></span>
+      <div class="seg"><button class="on" data-theme-set="light">Светлая</button><button data-theme-set="dark">Тёмная</button></div>
+    </div>
+  </div>
+</div>
+</section>
+</main>
+</div>
+
+<!-- ═══ МОБИЛЬНЫЙ ТАБ-БАР ═══ -->
+<nav class="tabbar">
+  <button class="tab on" data-nav="today"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Сегодня</button>
+  <button class="tab" data-nav="calendar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>Календарь</button>
+  <button class="tab" data-nav="bookings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Брони</button>
+  <button class="tab" data-nav="inbox"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a8 8 0 0 1-8 8H4l2-3a8 8 0 1 1 15-5z"/></svg>Чаты</button>
+  <button class="tab" data-nav="more"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>Ещё</button>
+</nav>
+<button class="fab" aria-label="Новая бронь">+</button>
+
+<!-- ═══════════ ШТОРКА: КАРТОЧКА БРОНИ ═══════════ -->
+<style>
+.scrim{position:fixed;inset:0;background:rgba(20,28,22,.45);z-index:60;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:61;background:var(--card);
+  border-radius:22px 22px 0 0;box-shadow:var(--shadow-lift);
+  max-height:92dvh;display:flex;flex-direction:column;
+  transform:translateY(105%);transition:transform .25s cubic-bezier(.3,.9,.3,1)}
+.sheet.show{transform:none}
+@media(min-width:1024px){
+  .sheet{left:auto;right:24px;bottom:24px;top:24px;width:460px;border-radius:20px;max-height:none;
+    transform:translateX(110%)}
+  .sheet.show{transform:none}
+}
+.sheet-grab{width:40px;height:4px;border-radius:99px;background:var(--line-strong);margin:10px auto 0;flex-shrink:0}
+@media(min-width:1024px){.sheet-grab{display:none}}
+.sheet-head{display:flex;align-items:center;gap:12px;padding:14px 16px 12px;border-bottom:1px solid var(--line);flex-shrink:0}
+.sheet-head .who{font-size:17px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+.sheet-head .meta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.sheet-x{width:34px;height:34px;border-radius:10px;background:var(--panel);display:grid;place-items:center;color:var(--muted);font-size:15px;flex-shrink:0}
+.sheet-body{overflow-y:auto;padding:14px 16px 8px;flex:1}
+.sheet-sect{margin-bottom:16px}
+.sheet-sect .micro{display:block;margin-bottom:7px;color:var(--muted)}
+.facts{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.fact{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 13px;font-size:13.5px}
+.fact + .fact{border-top:1px solid var(--line)}
+.fact .k{color:var(--muted)}
+.fact b{font-weight:600;text-align:right}
+.fact .edit{color:var(--accent-deep);font-size:12px;font-weight:600}
+/* единый чек-лист -->
+*/
+.steps{border:1px solid var(--line);border-radius:13px;overflow:hidden}
+.step{display:flex;align-items:center;gap:11px;padding:11px 13px}
+.step + .step{border-top:1px solid var(--line)}
+.step .s-ic{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:13px;flex-shrink:0}
+.step.done .s-ic{background:var(--ok-soft);color:var(--ok)}
+.step.todo .s-ic{background:var(--wait-soft);color:var(--wait)}
+.step.off .s-ic{background:var(--panel);color:var(--faint)}
+.step .s-name{font-size:13.5px;font-weight:600}
+.step.off .s-name{color:var(--faint);font-weight:500}
+.step .s-meta{font-size:11.5px;color:var(--muted)}
+.step .s-act{margin-left:auto;flex-shrink:0;font-size:12.5px;font-weight:700;color:var(--accent-deep)}
+.step .s-done{margin-left:auto;flex-shrink:0;font-size:12px;font-weight:600;color:var(--ok)}
+.progressbar{height:6px;border-radius:99px;background:var(--panel);margin:2px 0 12px;overflow:hidden}
+.progressbar i{display:block;height:100%;width:75%;background:var(--ok);border-radius:99px}
+.money-note{display:flex;gap:8px;align-items:center;background:var(--panel);border-radius:11px;padding:10px 12px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.sheet-foot{display:flex;gap:8px;padding:10px 16px calc(12px + env(safe-area-inset-bottom));border-top:1px solid var(--line);flex-shrink:0}
+.sheet-foot .btn{flex:1}
+.more-link{width:100%;text-align:center;padding:12px;color:var(--muted);font-size:13px;font-weight:600}
+.more-hidden{display:none}
+.more-hidden.open{display:block}
+</style>
+<div class="scrim" id="scrim"></div>
+<aside class="sheet" id="sheet-booking" aria-label="Карточка брони">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <div class="avatar" style="width:44px;height:44px">МО</div>
+    <div class="grow">
+      <div class="who">Мария Орлова <span class="src">Авито</span></div>
+      <div class="meta nums">Дом 3 · 4 – 5 июля · 2 гостя · 13 000 ₽</div>
+    </div>
+    <button class="sheet-x" data-close-sheet>✕</button>
+  </div>
+
+  <div class="sheet-body">
+    <!-- ОДИН чек-лист готовности: статус и действие в одной строке -->
+    <div class="sheet-sect">
+      <span class="micro">Готовность к заезду · 3 из 4</span>
+      <div class="progressbar"><i></i></div>
+      <div class="steps">
+        <div class="step done">
+          <div class="s-ic">₽</div>
+          <div><div class="s-name">Оплата</div><div class="s-meta">13 000 ₽ · оплачено на Авито</div></div>
+          <span class="s-done">✓</span>
+        </div>
+        <div class="step done">
+          <div class="s-ic">🪪</div>
+          <div><div class="s-name">Паспорт</div><div class="s-meta">проверен по Госуслугам</div></div>
+          <span class="s-done">✓</span>
+        </div>
+        <div class="step done">
+          <div class="s-ic">📄</div>
+          <div><div class="s-name">Договор</div><div class="s-meta">подписан вчера в 18:40</div></div>
+          <span class="s-done">✓</span>
+        </div>
+        <div class="step todo">
+          <div class="s-ic">🛡</div>
+          <div><div class="s-name">Залог 5 000 ₽</div><div class="s-meta">не внесён · заезд в 15:00</div></div>
+          <button class="s-act">Напомнить</button>
+        </div>
+      </div>
+      <div class="money-note">🛡 Гость платил наличными? — <b style="color:var(--ink)">&nbsp;Отметить залог внесённым</b></div>
+    </div>
+
+    <!-- Детали: только факты, редкое — редактируется по тапу -->
+    <div class="sheet-sect">
+      <span class="micro">Детали</span>
+      <div class="facts">
+        <div class="fact"><span class="k">Заезд</span><b class="nums">сегодня, 15:00 <span class="edit">изм.</span></b></div>
+        <div class="fact"><span class="k">Выезд</span><b class="nums">5 июля, до 12:00</b></div>
+        <div class="fact"><span class="k">Код замка</span><b class="nums">4403 <span class="edit">копир.</span></b></div>
+        <div class="fact"><span class="k">Телефон</span><b class="nums">+7 9•• ••• 27 44</b></div>
+        <div class="fact"><span class="k">Заметка</span><b style="color:var(--faint);font-weight:500">добавить…</b></div>
+      </div>
+    </div>
+
+    <!-- Всё редкое — свёрнуто -->
+    <button class="more-link" id="more-toggle">Ещё: перенести даты · сменить дом · допуслуги · условия · история ▾</button>
+    <div class="more-hidden" id="more-body">
+      <div class="sheet-sect">
+        <div class="facts">
+          <button class="fact" style="width:100%"><span class="k">Перенести даты</span><b class="edit">›</b></button>
+          <button class="fact" style="width:100%"><span class="k">Сменить дом</span><b class="edit">›</b></button>
+          <button class="fact" style="width:100%"><span class="k">Допуслуги</span><b>чан +3 000 ₽ <span class="edit">›</span></b></button>
+          <button class="fact" style="width:100%"><span class="k">Условия брони</span><b style="font-weight:500;color:var(--muted)">залог вкл · договор вкл</b></button>
+          <button class="fact" style="width:100%"><span class="k">История событий</span><b class="edit">›</b></button>
+          <button class="fact" style="width:100%"><span class="k" style="color:var(--alert)">Отменить бронь</span><b class="edit" style="color:var(--alert)">›</b></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3 главных действия, всегда под большим пальцем -->
+  <div class="sheet-foot">
+    <button class="btn sec">📞</button>
+    <button class="btn sec">Написать</button>
+    <button class="btn pri">Ссылка гостю</button>
+  </div>
+</aside>
+
+<!-- ═══════════ ШТОРКА: ЕЩЁ (мобайл) ═══════════ -->
+<aside class="sheet" id="sheet-more" aria-label="Ещё">
+  <div class="sheet-grab"></div>
+  <div class="sheet-head">
+    <div class="who" style="font-size:16px;font-weight:800">Ещё</div>
+    <span class="grow"></span>
+    <button class="sheet-x" data-close-sheet>✕</button>
+  </div>
+  <div class="sheet-body" style="padding-bottom:20px">
+    <div class="card" style="box-shadow:none">
+      <button class="set-row" data-nav="finance"><div class="ic">💰</div><div class="grow"><div class="name">Финансы</div><div class="meta">можно вывести 61 400 ₽</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row" data-nav="guests"><div class="ic">👥</div><div class="grow"><div class="name">Гости</div><div class="meta">28 в базе</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row" data-nav="tasks"><div class="ic">🧹</div><div class="grow"><div class="name">Уборка и задачи</div><div class="meta">1 ждёт выезда</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+      <button class="set-row" data-nav="settings"><div class="ic">⚙️</div><div class="grow"><div class="name">Настройки</div><div class="meta">автопилот · цены · площадки</div></div><span class="micro" style="color:var(--faint)">›</span></button>
+    </div>
+  </div>
+</aside>
+
+<script>
+/* ── прототип: навигация без логики ── */
+const screens = document.querySelectorAll('.screen');
+const railItems = document.querySelectorAll('.rail-item[data-nav]');
+const tabs = document.querySelectorAll('.tab[data-nav]');
+const scrim = document.getElementById('scrim');
+const shBooking = document.getElementById('sheet-booking');
+const shMore = document.getElementById('sheet-more');
+
+function go(name){
+  if(name === 'more'){ openSheet(shMore); return; }
+  screens.forEach(s => s.classList.toggle('active', s.id === 's'+'-'+name));
+  railItems.forEach(b => b.classList.toggle('on', b.dataset.nav === name));
+  tabs.forEach(b => b.classList.toggle('on', b.dataset.nav === name));
+  closeSheets();
+  window.scrollTo({top:0});
+}
+function openSheet(el){ scrim.classList.add('show'); el.classList.add('show'); }
+function closeSheets(){ scrim.classList.remove('show'); shBooking.classList.remove('show'); shMore.classList.remove('show'); }
+
+document.addEventListener('click', e => {
+  const nav = e.target.closest('[data-nav]');
+  if(nav){ e.preventDefault(); go(nav.dataset.nav); return; }
+  if(e.target.closest('[data-open="booking"]')){ openSheet(shBooking); return; }
+  if(e.target.closest('[data-close-sheet]') || e.target === scrim){ closeSheets(); return; }
+});
+
+/* тред в чатах */
+const openThread = document.getElementById('open-thread');
+const threadBox = document.getElementById('thread-box');
+const closeThread = document.getElementById('close-thread');
+if(openThread) openThread.addEventListener('click', () => { threadBox.hidden = false; threadBox.scrollIntoView({behavior:'smooth'}); });
+if(closeThread) closeThread.addEventListener('click', () => { threadBox.hidden = true; });
+
+/* «ещё» в карточке брони */
+const mt = document.getElementById('more-toggle');
+if(mt) mt.addEventListener('click', () => document.getElementById('more-body').classList.toggle('open'));
+
+/* тема */
+document.querySelectorAll('[data-theme-set]').forEach(b => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.themeSet;
+  document.querySelectorAll('[data-theme-set]').forEach(x => x.classList.toggle('on', x === b));
+}));
+</script>
+</body></html>
